@@ -1,0 +1,39 @@
+<configuration debug="true">
+
+	<conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>${application.home}/logs/application.log</file>
+		<encoder>
+			<pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="play" level="INFO" />
+	<logger name="application" level="DEBUG" />
+	<logger name="actors.event" level="WARN" />
+
+	<!-- Set logging for all Akka library classes to INFO -->
+	<logger name="akka" level="WARN" />
+
+	<!-- Set a specific actor to DEBUG -->
+	<!--<logger name="actors.MyActor" level="DEBUG" />-->
+
+	<!-- Slick login ref : https://github.com/slick/slick/blob/master/common-test-resources/logback.xml -->
+    <!--<logger name="slick.jdbc" level="DEBUG" />-->
+    <!--<logger name="slick.jdbc.JdbcBackend.benchmark" level="DEBUG" />
+    <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG" />
+    <logger name="slick.jdbc.StatementInvoker.result" level="DEBUG" />
+    <logger name="slick.compiler.QueryCompilerBenchmark" level="DEBUG" />-->
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>
