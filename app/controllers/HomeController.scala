@@ -37,7 +37,7 @@ class HomeController @Inject() extends Controller {
     val instances = ClevercloudApi.all_instances()
 
     val ip = ClevercloudApi.getCurrentInstanceIp()
-    val cluster_ip = ClevercloudApi.getRunningInstanceIp()
+    val cluster_ip = ClevercloudApi.getRunningInstanceIp().map(s => s"${s._1}:${s._2}")
 
     Ok(views.html.index(ip, cluster_ip, apps, instances))
   }
@@ -46,7 +46,7 @@ class HomeController @Inject() extends Controller {
     val ip = request.queryString.get("ip").flatMap(_.headOption).getOrElse("")
     val port = request.queryString.get("port").flatMap(_.headOption).getOrElse("")
     val url = s"http://$ip:$port/ping"
-    Logger.warn(s"test sur url $url")
+    Logger.warn(s"test sur url $url form ip = ${ClevercloudApi.getCurrentInstanceIp()}")
     WS.url(url).get().map{ response =>
       Logger.warn(s"response : $response")
       Ok(response.body)
@@ -57,5 +57,25 @@ class HomeController @Inject() extends Controller {
       }
     }
 
+  }
+
+  def test2 = Action.async { implicit request =>
+    val current_ip = ClevercloudApi.getCurrentInstanceIp()
+    val all_ip = ClevercloudApi.getRunningInstanceIp()
+    val other_ip = all_ip.filter(s => s._1 != current_ip).headOption
+
+    other_ip.map(s =>  s"http://${s._1}:${s._2}/ping")
+      .map{ url =>
+      Logger.warn(s"test sur url $url form ip = $current_ip")
+      WS.url(url).get().map{ response =>
+        Logger.warn(s"response : $response")
+        Ok(response.body)
+      } recover {
+        case e:Exception => {
+          Logger.error(s"Error while sending test request on $url", e)
+          Ok(s"Exception : $e")
+        }
+      }
+    }.getOrElse(Future.successful(Ok("no data")))
   }
 }
