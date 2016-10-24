@@ -31,69 +31,31 @@ class HomeController @Inject() extends Controller {
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def index = Action {
+  def index = Action { implicit request =>
 
-     implicit request =>
+    val apps = ClevercloudApi.all_apps()
+    val instances = ClevercloudApi.all_instances()
 
-       val apps = ClevercloudApi.all_apps()
-       val instances = ClevercloudApi.all_instances()
-
-       val ip = ClevercloudApi.getCurrentInstanceIp()
-       val cluster_ip = ClevercloudApi.getRunningInstanceIp()
+    val ip = ClevercloudApi.getCurrentInstanceIp()
+    val cluster_ip = ClevercloudApi.getRunningInstanceIp()
 
     Ok(views.html.index(ip, cluster_ip, apps, instances))
   }
 
-    val KEY = ConsumerKey(ClevercloudApi.consumerKey, ClevercloudApi.consumerSecret)
-
-    val oauth = OAuth(ServiceInfo(
-      "https://api.clever-cloud.com/v2/oauth/request_token_query",
-      "https://api.clever-cloud.com/v2/oauth/access_token_query",
-      "https://api.clever-cloud.com/v2/oauth/authorize",
-      KEY),
-      true)
-
-    def sessionTokenPair(implicit request: RequestHeader): Option[RequestToken] = {
-      for {
-        token <- request.session.get("token")
-        secret <- request.session.get("secret")
-      } yield {
-        RequestToken(token, secret)
+  def test = Action.async { implicit request =>
+    val ip = request.queryString.get("ip").flatMap(_.headOption).getOrElse("")
+    val port = request.queryString.get("port").flatMap(_.headOption).getOrElse("")
+    val url = s"http://$ip:$port/ping"
+    Logger.warn(s"test sur url $url")
+    WS.url(url).get().map{ response =>
+      Logger.warn(s"response : $response")
+      Ok(response.body)
+    } recover {
+      case e:Exception => {
+        Logger.error(s"Error while sending test request on $url", e)
+        Ok(s"Exception : $e")
       }
     }
 
-    def authenticate = Action { request =>
-      request.getQueryString("oauth_verifier").map { verifier =>
-        val tokenPair = sessionTokenPair(request).get
-        // We got the verifier; now get the access token, store it and back to index
-        oauth.retrieveAccessToken(tokenPair, verifier) match {
-          case Right(t) => {
-            // We received the authorized tokens in the OAuth object - store it before we proceed
-            Redirect(routes.HomeController.index).withSession("token" -> t.token, "secret" -> t.secret)
-          }
-          case Left(e) => throw e
-        }
-      }.getOrElse(
-        oauth.retrieveRequestToken("http://localhost:9000/auth") match {
-          case Right(t) => {
-            // We received the unauthorized tokens in the OAuth object - store it before we proceed
-            Redirect(oauth.redirectUrl(t.token)).withSession("token" -> t.token, "secret" -> t.secret)
-          }
-          case Left(e) => throw e
-        })
-    }
-
-    def timeline = Action.async { implicit request =>
-      sessionTokenPair match {
-        case Some(credentials) => {
-          WS.url("https://api.twitter.com/1.1/statuses/home_timeline.json")
-            .sign(OAuthCalculator(KEY, credentials))
-            .get
-            .map(result => Ok(result.json))
-        }
-        case _ => Future.successful(Redirect(routes.HomeController.authenticate))
-      }
-    }
-
-
+  }
 }

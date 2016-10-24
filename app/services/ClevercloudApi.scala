@@ -32,6 +32,7 @@ object ClevercloudApi {
 
   val particeep = "orga_5c2880c5-0c9e-4b5a-acab-085ed2f8f950"
   val app_api_test = "app_be0fdb37-7ea8-441c-b733-d717f41caa77"
+  val app_test_cluster = "app_b621d434-a282-402b-8e7a-20bd77f0733c"
 
   final val api: DefaultApi = new DefaultApi()
   final val apiClient: CleverApiClient = buildClient()
@@ -47,7 +48,7 @@ object ClevercloudApi {
   }
 
   def all_instances(): List[AppInstance] = {
-    api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_api_test).asScala.toList
+    api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
 //      .map{i =>
 //        s"""
 //           |id : ${i.getAppId}
