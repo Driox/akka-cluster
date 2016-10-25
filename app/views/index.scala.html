@@ -37,7 +37,20 @@
  </style>
 
   <div class="container">
-    current ip : <span class="primary-color">@ip</span><br>
+    current ip : <span class="primary-color">Basic : @ip</span><br>
+    <ul class="primary-color">
+      @for(i <- utils.NetworkUtils.getIps()){
+        <li>@i</li>
+      }
+    </ul>
+    <ul class="primary-color">
+      @for(i <- utils.NetworkUtils.complexIp()){
+        <li>name : @{i.getName}</li>
+        <li>inet : @{i.getInetAddresses}</li>
+        <li>adr  : @{i.getInterfaceAddresses}</li>
+        <li>hard : @{i.getHardwareAddress}</li>
+      }
+    </ul>
     <br>
     cluster ips :
     <ul class="primary-color">
@@ -45,8 +58,6 @@
        <li>@a_ip</li>
       }
     </ul>
-
-
 
     <h2>Instanes</h2>
     <ul>
@@ -69,6 +80,8 @@
         <li>@o</li>
       }
     </ul>
+
+
   </div>
 
   <button onclick="doIt()">do it </button>
