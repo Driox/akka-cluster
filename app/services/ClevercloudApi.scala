@@ -69,7 +69,7 @@ object ClevercloudApi {
       .map( i => (i.getIp, i.getAppPort.intValue()))
       .map(i => s"${i._1}:${i._2}")
       .headOption
-      .getOrElse((NetworkUtils.getIp(), 80))
+      .getOrElse(NetworkUtils.getIp())
   }
 
   def getRunningInstanceIp(): List[(String, Int)] = {
