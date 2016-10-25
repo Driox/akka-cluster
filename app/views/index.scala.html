@@ -3,6 +3,7 @@
  * message to display.
  *@
 @(ip: String
+, current_ip: String
 , cluster_ip:List[String]
 , organizations:List[String]
 , instances:List[io.swagger.client.model.AppInstance])
@@ -34,28 +35,26 @@
   .primary-color {
     color: #fff;
   }
+
+  li.selected {
+    color: #F33;
+  }
  </style>
 
   <div class="container">
-    current ip : <span class="primary-color">Basic : @ip or @{utils.NetworkUtilsJava.getLocalHostLANAddress()}</span><br>
+    current ip : <br>
     <ul class="primary-color">
-      @for(i <- utils.NetworkUtils.getIps()){
+        <li>Basic : @ip</li>
+        <li>Clevercloud @current_ip</li>
+        @for(i <- utils.NetworkUtils.getAllIps()){
         <li>@i</li>
-      }
-    </ul>
-    <ul class="primary-color">
-      @for(i <- utils.NetworkUtils.complexIp()){
-        <li>name : @{i.getName}</li>
-        <li>inet : @{i.getInetAddresses}</li>
-        <li>adr  : @{i.getInterfaceAddresses}</li>
-        <li>hard : @{i.getHardwareAddress}</li>
-      }
+        }
     </ul>
     <br>
     cluster ips :
     <ul class="primary-color">
       @for(a_ip <- cluster_ip){
-       <li>@a_ip</li>
+       <li class="@if(a_ip == current_ip){ selected }">@a_ip</li>
       }
     </ul>
 

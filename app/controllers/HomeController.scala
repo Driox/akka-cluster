@@ -36,10 +36,11 @@ class HomeController @Inject() extends Controller {
     val apps = ClevercloudApi.all_apps()
     val instances = ClevercloudApi.all_instances()
 
+    val internal_ip = NetworkUtils.getIp()
     val ip = ClevercloudApi.getCurrentInstanceIp()
     val cluster_ip = ClevercloudApi.getRunningInstanceIp().map(s => s"${s._1}:${s._2}")
 
-    Ok(views.html.index(ip, cluster_ip, apps, instances))
+    Ok(views.html.index(internal_ip, ip, cluster_ip, apps, instances))
   }
 
   def test = Action.async { implicit request =>

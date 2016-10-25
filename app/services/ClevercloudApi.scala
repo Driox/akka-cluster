@@ -22,17 +22,19 @@ import scala.collection.JavaConverters._
 
 object ClevercloudApi {
 
-  val app_ip = Play.configuration.getString("clevercloud.app_id").getOrElse("not_set")
-  val org_ip = Play.configuration.getString("clevercloud.org_id").getOrElse("not_set")
+  val instance_nb = Play.configuration.getString("clevercloud.instance.number").getOrElse("not_set")
+  val instance_id = Play.configuration.getString("clevercloud.instance.id").getOrElse("not_set")
+
+  val app_test_cluster = Play.configuration.getString("clevercloud.app_id.test_cluster").getOrElse("not_set")
+  val particeep = Play.configuration.getString("clevercloud.org_id.particeep").getOrElse("not_set")
+
   val base_url = "https://api.clever-cloud.com/v2/"
   val consumerKey = "8IitRr6CvosYtKE2dYFHJbpn83keRf"
   val consumerSecret = "wvJeEAAki8kHQrONgkjAzscF3LUMHr"
   val oauth_token = "99486087b7a24132ae57df260ac79865"
   val oauth_verifier = "b66de96a21364822919d1cfaab5d1a8e"
 
-  val particeep = "orga_5c2880c5-0c9e-4b5a-acab-085ed2f8f950"
   val app_api_test = "app_be0fdb37-7ea8-441c-b733-d717f41caa77"
-  val app_test_cluster = "app_b621d434-a282-402b-8e7a-20bd77f0733c"
 
   final val api: DefaultApi = new DefaultApi()
   final val apiClient: CleverApiClient = buildClient()
@@ -61,13 +63,20 @@ object ClevercloudApi {
 //      }
   }
 
-  def getCurrentInstanceIp(): String = NetworkUtils.getIp()
+  def getCurrentInstanceIp(): String = {
+     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
+      .filter(_.getId == instance_id)
+      .map( i => (i.getIp, i.getAppPort.intValue()))
+      .map(i => s"${i._1}:${i._2}")
+      .headOption
+      .getOrElse((NetworkUtils.getIp(), 80))
+  }
 
   def getRunningInstanceIp(): List[(String, Int)] = {
     val instances = api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
     instances
       .filter(_.getState == "UP")
-      .map( zz => (zz.getIp, zz.getAppPort.intValue()))
+      .map( i => (i.getIp, i.getAppPort.intValue()))
   }
 }
 
