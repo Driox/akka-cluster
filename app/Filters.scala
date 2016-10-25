@@ -18,7 +18,8 @@ import play.api.mvc._
  */
 @Singleton
 class Filters @Inject() (
-  env: Environment) extends HttpFilters {
+    env: Environment
+) extends HttpFilters {
 
   override val filters = {
     // Use the example filter if we're running development mode. If

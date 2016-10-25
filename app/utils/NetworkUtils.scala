@@ -15,7 +15,7 @@ object NetworkUtils {
     NetworkUtilsJava.getLocalHostLANAddress().getHostAddress()
   }
 
-  private def complexIp():List[NetworkInterface] = {
+  private def complexIp(): List[NetworkInterface] = {
     NetworkInterface.getNetworkInterfaces().toList
   }
 }

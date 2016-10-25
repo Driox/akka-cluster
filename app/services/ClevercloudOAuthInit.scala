@@ -13,7 +13,6 @@ import io.swagger.client.api.DefaultApi
 import javax.ws.rs.client.Client
 import javax.ws.rs.client.ClientBuilder
 
-
 object ClevercloudApi_Test {
 
   private val consumerKey = Play.configuration.getString("clevercloud.api.consumerKey").getOrElse("8IitRr6CvosYtKE2dYFHJbpn83keRf")
@@ -23,7 +22,6 @@ object ClevercloudApi_Test {
 
   private val particeep = Play.configuration.getString("clevercloud.org_id.particeep").getOrElse("not_set")
 
-  
   def test2() = {
     var api = new DefaultApi()
     var apiClient = new CleverApiClient(consumerKey, consumerSecret, oauth_token, oauth_verifier)
@@ -36,14 +34,15 @@ object ClevercloudApi_Test {
     }
   }
 
-
   def getAccessToken() = {
     val client: Client = ClientBuilder.newBuilder().build()
     val consumerCredentials = new ConsumerCredentials(consumerKey, consumerSecret)
     val authFlow: OAuth1AuthorizationFlow = OAuth1ClientSupport.builder(consumerCredentials)
-      .authorizationFlow("https://api.clever-cloud.com/v2/oauth/request_token_query",
+      .authorizationFlow(
+        "https://api.clever-cloud.com/v2/oauth/request_token_query",
         "https://api.clever-cloud.com/v2/oauth/access_token_query",
-        "https://api.clever-cloud.com/v2/oauth/authorize")
+        "https://api.clever-cloud.com/v2/oauth/authorize"
+      )
       .enableLogging()
       .client(client)
       .callbackUri("https://test-cluster.particeep.com")
@@ -53,15 +52,15 @@ object ClevercloudApi_Test {
     println(authorizationUri)
     val IN = new BufferedReader(new InputStreamReader(System.in, Charset.forName("UTF-8")))
     println("Enter the authorization code: ")
-        var in:String = null
+    var in: String = null
 
-        try {
-            in = IN.readLine()
-        } catch {
-          case e:Exception => e.printStackTrace()
-        }
+    try {
+      in = IN.readLine()
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
     println(s"token entered : $in")
-    val accessToken:AccessToken = authFlow.finish(in)
+    val accessToken: AccessToken = authFlow.finish(in)
     println("Your token : " + accessToken.getToken() + "\nYour token secret : " + accessToken.getAccessTokenSecret())
 
   }

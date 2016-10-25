@@ -10,7 +10,6 @@ import io.swagger.client.api.DefaultApi
 
 import scala.collection.JavaConverters._
 
-
 object ClevercloudApi {
 
   private val instance_nb = Play.configuration.getString("clevercloud.instance.number").getOrElse("not_set")
@@ -43,9 +42,9 @@ object ClevercloudApi {
   }
 
   def getCurrentInstanceIp(): String = {
-     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
+    api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
       .filter(_.getId == instance_id)
-      .map( i => (i.getIp, i.getAppPort.intValue()))
+      .map(i => (i.getIp, i.getAppPort.intValue()))
       .map(i => s"${i._1}:${i._2}")
       .headOption
       .getOrElse(NetworkUtils.getIp())
@@ -55,7 +54,7 @@ object ClevercloudApi {
     val instances = api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
     instances
       .filter(_.getState == "UP")
-      .map( i => (i.getIp, i.getAppPort.intValue()))
+      .map(i => (i.getIp, i.getAppPort.intValue()))
   }
 
   def getOtherInstanceIp(): List[(String, Int)] = {

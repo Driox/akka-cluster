@@ -33,3 +33,15 @@ lazy val deps_akka = Seq(
 )
 
 routesGenerator := InjectedRoutesGenerator
+
+
+// ~~~~~~~~~~~~~~~~~
+//Scalariform config
+
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(scalariform.formatter.preferences.AlignSingleLineCaseStatements, true)
+  .setPreference(scalariform.formatter.preferences.AlignParameters, true)
+  .setPreference(scalariform.formatter.preferences.DoubleIndentClassDeclaration, true)
+  .setPreference(scalariform.formatter.preferences.PreserveDanglingCloseParenthesis, true)
