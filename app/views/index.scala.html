@@ -37,7 +37,7 @@
  </style>
 
   <div class="container">
-    current ip : <span class="primary-color">Basic : @ip</span><br>
+    current ip : <span class="primary-color">Basic : @ip or @{utils.NetworkUtilsJava.getLocalHostLANAddress()}</span><br>
     <ul class="primary-color">
       @for(i <- utils.NetworkUtils.getIps()){
         <li>@i</li>
