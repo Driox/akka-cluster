@@ -16,10 +16,10 @@ import javax.ws.rs.client.ClientBuilder
 
 object ClevercloudApi_Test {
 
-  private val consumerKey = "8IitRr6CvosYtKE2dYFHJbpn83keRf"
-  private val consumerSecret = "wvJeEAAki8kHQrONgkjAzscF3LUMHr"
-  private val oauth_token = "99486087b7a24132ae57df260ac79865"
-  private val oauth_verifier = "b66de96a21364822919d1cfaab5d1a8e"
+  private val consumerKey = Play.configuration.getString("clevercloud.api.consumerKey").getOrElse("8IitRr6CvosYtKE2dYFHJbpn83keRf")
+  private val consumerSecret = Play.configuration.getString("clevercloud.api.consumerSecret").getOrElse("wvJeEAAki8kHQrONgkjAzscF3LUMHr")
+  private val oauth_token = Play.configuration.getString("clevercloud.api.oauth_token").getOrElse("99486087b7a24132ae57df260ac79865")
+  private val oauth_verifier = Play.configuration.getString("clevercloud.api.oauth_verifier").getOrElse("b66de96a21364822919d1cfaab5d1a8e")
 
   private val particeep = Play.configuration.getString("clevercloud.org_id.particeep").getOrElse("not_set")
 
