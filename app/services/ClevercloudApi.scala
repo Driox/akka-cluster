@@ -57,6 +57,6 @@ object ClevercloudApi {
   }
 
   def getOtherInstanceIp(): List[(String, Int)] = {
-    getRunningInstanceIp().filter(s => s._1 != getCurrentInstanceIp())
+    getRunningInstanceIp().filter(_ != getCurrentInstanceIp())
   }
 }
