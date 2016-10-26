@@ -7,6 +7,7 @@ GET     /                           @controllers.HomeController.index
 GET     /ping                       @controllers.HomeController.ping
 GET     /ping_huge                  @controllers.HomeController.ping_huge
 GET     /test/:path                 @controllers.HomeController.test(path:String)
+GET     /test2/:path/:iter          @controllers.HomeController.test2(path:String, iter:Int)
 
 # An example controller showing how to write asynchronous code
 GET     /message                    @controllers.AsyncController.message

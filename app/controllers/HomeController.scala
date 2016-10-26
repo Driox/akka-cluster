@@ -9,7 +9,7 @@ import play.api.libs.oauth._
 import play.api.libs.ws._
 import play.api.mvc._
 import services.ClevercloudApi
-import utils.NetworkUtils
+import utils.{MathUtils, NetworkUtils}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -82,6 +82,40 @@ class HomeController @Inject() extends Controller {
       case e: Exception => {
         Logger.error(s"Error while sending test request on $url", e)
         Ok(s"Exception : $e")
+      }
+    }
+  }
+
+  def test2(path: String, iter: Int) = Action.async { implicit request =>
+    val other_ip = ClevercloudApi.getOtherInstanceIp().headOption
+
+    other_ip.map(s => s"http://${s._1}:${s._2}/$path")
+      .map { url =>
+        val rez = List.range(0, iter).map(x => requestWithTiming2(url))
+        Future.sequence(rez).map(_.filter(_ != -1)).map { data =>
+
+          val msg =
+            s"""
+               |avarage  time for ${data.size} requests : ${MathUtils.avarage(data)} ms
+               |avarage2 time for ${data.size} requests : ${MathUtils.avarage2(data)} ms
+               |median   time for ${data.size} requests : ${MathUtils.median(data)} ms
+             """.stripMargin
+
+          Logger.warn(msg)
+          Ok(msg)
+        }
+      }.getOrElse(Future.successful(Ok("no data")))
+  }
+
+  private def requestWithTiming2(url: String): Future[Long] = {
+    val start_at = System.currentTimeMillis()
+    WS.url(url).get().map { response =>
+      val end_at = System.currentTimeMillis()
+      (end_at - start_at)
+    } recover {
+      case e: Exception => {
+        Logger.error(s"Error while sending test request on $url", e)
+        -1L
       }
     }
   }
