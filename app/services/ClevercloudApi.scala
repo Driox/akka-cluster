@@ -41,13 +41,12 @@ object ClevercloudApi {
     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
   }
 
-  def getCurrentInstanceIp(): String = {
+  def getCurrentInstanceIp(): (String, Int) = {
     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
       .filter(_.getId == instance_id)
       .map(i => (i.getIp, i.getAppPort.intValue()))
-      .map(i => s"${i._1}:${i._2}")
       .headOption
-      .getOrElse(NetworkUtils.getIp())
+      .getOrElse((NetworkUtils.getIp(), 80))
   }
 
   def getRunningInstanceIp(): List[(String, Int)] = {
