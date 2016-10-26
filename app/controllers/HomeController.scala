@@ -50,15 +50,21 @@ class HomeController @Inject() extends Controller {
     other_ip.map(s => s"http://${s._1}:${s._2}/ping")
       .map { url =>
         Logger.warn(s"test sur url $url form ip = $current_ip")
-        WS.url(url).get().map { response =>
-          Logger.warn(s"response : $response")
-          Ok(response.body)
-        } recover {
-          case e: Exception => {
-            Logger.error(s"Error while sending test request on $url", e)
-            Ok(s"Exception : $e")
-          }
-        }
+        requestWithTiming(url)
       }.getOrElse(Future.successful(Ok("no data")))
+  }
+
+  private def requestWithTiming(url: String) = {
+    val start_at = System.currentTimeMillis()
+    WS.url(url).get().map { response =>
+      val end_at = System.currentTimeMillis()
+      Logger.warn(s"response in ${(end_at - start_at)} ms : $response")
+      Ok(response.body)
+    } recover {
+      case e: Exception => {
+        Logger.error(s"Error while sending test request on $url", e)
+        Ok(s"Exception : $e")
+      }
+    }
   }
 }
