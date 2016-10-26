@@ -9,7 +9,7 @@ import play.api.libs.oauth._
 import play.api.libs.ws._
 import play.api.mvc._
 import services.ClevercloudApi
-import utils.{MathUtils, NetworkUtils}
+import utils.{NetworkUtilsJava, MathUtils, NetworkUtils}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,7 +20,7 @@ import scala.util.Random
  * application's home page.
  */
 @Singleton
-class HomeController @Inject() extends Controller {
+class HomeController @Inject() (clevercloudApi: ClevercloudApi) extends Controller {
 
   def ping = Action {
     println(s"ping done")
@@ -42,19 +42,19 @@ class HomeController @Inject() extends Controller {
    */
   def index = Action { implicit request =>
 
-    val apps = ClevercloudApi.all_apps()
-    val instances = ClevercloudApi.all_instances()
+    val apps = clevercloudApi.all_apps()
+    val instances = clevercloudApi.all_instances()
 
     val internal_ip = NetworkUtils.getIp()
-    val ip = ClevercloudApi.getCurrentInstanceIp()
-    val cluster_ip = ClevercloudApi.getRunningInstanceIp().map(s => s"${s._1}:${s._2}")
+    val ip = clevercloudApi.getCurrentInstanceIp()
+    val cluster_ip = clevercloudApi.getRunningInstanceIp().map(s => s"${s._1}:${s._2}")
 
     Ok(views.html.index(internal_ip, s"${ip._1}:${ip._2}", cluster_ip, apps, instances))
   }
 
   def test(path: String) = Action.async { implicit request =>
-    val current_ip = ClevercloudApi.getCurrentInstanceIp()
-    val other_ips = ClevercloudApi.getOtherInstanceIp()
+    val current_ip = clevercloudApi.getCurrentInstanceIp()
+    val other_ips = clevercloudApi.getOtherInstanceIp()
     val other_ip = other_ips.headOption
 
     Logger.warn(
@@ -87,7 +87,7 @@ class HomeController @Inject() extends Controller {
   }
 
   def test2(path: String, iter: Int) = Action.async { implicit request =>
-    val other_ip = ClevercloudApi.getOtherInstanceIp().headOption
+    val other_ip = clevercloudApi.getOtherInstanceIp().headOption
 
     other_ip.map(s => s"http://${s._1}:${s._2}/$path")
       .map { url =>
