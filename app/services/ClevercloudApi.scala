@@ -51,6 +51,8 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .map(i => (i.getIp, i.getAppPort.intValue()))
       .headOption
       .getOrElse((NetworkUtils.getIp(), NetworkUtils.getPort()))
+
+    ("test-cluster.particeep.com", 80)
   }
 
   def getRunningInstanceIp(): List[(String, Int)] = {
