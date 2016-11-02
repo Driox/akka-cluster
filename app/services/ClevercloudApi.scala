@@ -58,7 +58,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .filter(_.getState == "UP")
       .map(i => (i.getIp, i.getAppPort.intValue()))
 
-    List(("192.168.1.16", 2552), ("192.168.1.16", 2551))
+    //List(("192.168.1.16", 2552), ("192.168.1.16", 2551))
   }
 
   def getOtherInstanceIp(): List[(String, Int)] = {
@@ -66,11 +66,15 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
   }
 
   def isSeedNode(): Boolean = {
-    all_instances
+    val from_property = "y".equals(System.getProperty("seed"))
+
+    val from_cc = all_instances
       .filter(_.getState == "UP")
       .sortBy(_.getDeployNumber)
       .headOption
       .map(_.getId == instance_id)
-      .getOrElse(!"".equals(System.getProperty("seed")))
+      .getOrElse(from_property)
+
+    from_property || from_cc
   }
 }

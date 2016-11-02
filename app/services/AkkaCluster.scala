@@ -56,16 +56,18 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     val cluster = Cluster(system)
     if (clevercloudApi.isSeedNode()) {
       val ip = clevercloudApi.getCurrentInstanceIp()
+      Logger.info(s"[AkkaCluster] join seed node = $ip")
       cluster.join(Address("akka.tcp", system.name, ip._1, ip._2))
     } else {
       clevercloudApi.getOtherInstanceIp().headOption.map { ip =>
+        Logger.info(s"[AkkaCluster] cluster node = $ip")
         cluster.join(Address("akka.tcp", system.name, ip._1, ip._2))
       }
     }
   }
 
   def init() = {
-    Logger.info(s"[AkkaCluster] init")
+    Logger.info(s"[AkkaCluster] init - is_seed : ${clevercloudApi.isSeedNode()}")
     val system: ActorSystem = create_system()
 
     Logger.info(s"[AkkaCluster] join cluster")
@@ -74,13 +76,16 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     Logger.info(s"[AkkaCluster] add brodcaster actor")
     val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
 
-    Logger.info(s"[AkkaCluster] start scheduler")
-    implicit val executor = system.dispatcher
-    system.scheduler.schedule(0 seconds, 5 seconds) {
-      val words = Random.shuffle(
-        List("peter", "piper", "picked", "a", "peck", "of", "pickled", "pepper")
-      )
-      broadcaster ! Message(words mkString " ")
+    if (clevercloudApi.isSeedNode()) {
+      Logger.info(s"[AkkaCluster] start scheduler")
+      implicit val executor = system.dispatcher
+      system.scheduler.schedule(0 seconds, 5 seconds) {
+        val words = Random.shuffle(
+          List("peter", "piper", "picked", "a", "peck", "of", "pickled", "pepper")
+        )
+        Logger.warn(s"[AkkaCluster] start dispatch word : $words")
+        broadcaster ! Message(words mkString " ")
+      }
     }
   }
 }
