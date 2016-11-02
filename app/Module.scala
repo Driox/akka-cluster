@@ -26,7 +26,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     // application starts.
     //bind(classOf[ApplicationTimer]).asEagerSingleton()
     bind(classOf[ClevercloudApi]).asEagerSingleton()
-    bind(classOf[AkkaCluster]).asEagerSingleton()
+    //bind(classOf[AkkaCluster]).asEagerSingleton()
   }
 
 }

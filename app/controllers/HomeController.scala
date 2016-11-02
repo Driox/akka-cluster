@@ -8,7 +8,7 @@ import play.api.libs.json.Json
 import play.api.libs.oauth._
 import play.api.libs.ws._
 import play.api.mvc._
-import services.ClevercloudApi
+import services.{AkkaCluster, ClevercloudApi}
 import utils.{NetworkUtilsJava, MathUtils, NetworkUtils}
 
 import scala.concurrent.Future
@@ -20,10 +20,12 @@ import scala.util.Random
  * application's home page.
  */
 @Singleton
-class HomeController @Inject() (clevercloudApi: ClevercloudApi) extends Controller {
+class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration) extends Controller {
 
   def ping = Action {
     println(s"ping done")
+        val akka = new AkkaCluster(clevercloudApi, configuration)
+        akka.init()
     Ok(s"OK")
   }
 
