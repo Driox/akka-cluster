@@ -68,6 +68,8 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
   def isSeedNode(): Boolean = {
     val from_property = "y".equals(System.getProperty("seed"))
 
+    val from_config = configuration.getBoolean("application.cluster.is.seed").getOrElse(false)
+
     val from_cc = all_instances
       .filter(_.getState == "UP")
       .sortBy(_.getDeployNumber)
@@ -75,6 +77,6 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .map(_.getId == instance_id)
       .getOrElse(from_property)
 
-    from_property || from_cc
+    from_property || from_config || from_cc
   }
 }

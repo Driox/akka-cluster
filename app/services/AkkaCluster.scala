@@ -28,7 +28,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
 
-    val seeds = clevercloudApi.getOtherInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    //val seeds = clevercloudApi.getOtherInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
     //val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
     val currentIp = clevercloudApi.getCurrentInstanceIp()
 
@@ -52,9 +52,9 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     system
   }
 
-  private def join_cluster(system: ActorSystem) = {
+  private def join_cluster(system: ActorSystem, is_seed:Boolean) = {
     val cluster = Cluster(system)
-    if (clevercloudApi.isSeedNode()) {
+    if (is_seed) {
       val ip = clevercloudApi.getCurrentInstanceIp()
       Logger.info(s"[AkkaCluster] join seed node = $ip")
       cluster.join(Address("akka.tcp", system.name, ip._1, ip._2))
@@ -67,16 +67,17 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   def init() = {
-    Logger.info(s"[AkkaCluster] init - is_seed : ${clevercloudApi.isSeedNode()}")
+    val is_seed = clevercloudApi.isSeedNode()
+    Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
     val system: ActorSystem = create_system()
 
     Logger.info(s"[AkkaCluster] join cluster")
-    join_cluster(system)
+    join_cluster(system, is_seed)
 
     Logger.info(s"[AkkaCluster] add brodcaster actor")
     val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
 
-    if (clevercloudApi.isSeedNode()) {
+    if (is_seed) {
       Logger.info(s"[AkkaCluster] start scheduler")
       implicit val executor = system.dispatcher
       system.scheduler.schedule(0 seconds, 5 seconds) {
