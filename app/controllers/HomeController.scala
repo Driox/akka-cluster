@@ -2,6 +2,7 @@ package controllers
 
 import java.net.InetAddress
 import javax.inject._
+import actor.CounterSharding
 import play.api.Play.current
 import play.api._
 import play.api.libs.json.Json
@@ -20,12 +21,15 @@ import scala.util.Random
  * application's home page.
  */
 @Singleton
-class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration) extends Controller {
+class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration, cluster: AkkaCluster) extends Controller {
 
   def ping = Action {
     println(s"ping done")
     //    val akka = new AkkaCluster(clevercloudApi, configuration)
     //    akka.init()
+
+    CounterSharding.test(cluster.system_cc)
+
     Ok(s"OK")
   }
 

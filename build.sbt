@@ -30,7 +30,9 @@ lazy val deps_akka = Seq(
   "com.typesafe.akka"      %% "akka-testkit"               % akka    % "test"  withSources(),
   "com.typesafe.akka"      %% "akka-persistence-query-experimental"  % akka    withSources(),
   "com.okumin"             %% "akka-persistence-sql-async" % "0.3.1"           withSources(),
-  "com.typesafe.akka"      %% "akka-cluster-metrics"       % akka              withSources()
+  "com.typesafe.akka"      %% "akka-cluster-metrics"       % akka              withSources(),
+  "org.iq80.leveldb"            % "leveldb"                % "0.7",
+  "org.fusesource.leveldbjni"   % "leveldbjni-all"         % "1.8"
 )
 
 routesGenerator := InjectedRoutesGenerator

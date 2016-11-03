@@ -80,7 +80,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
     from_property || from_config || from_cc
   }
 
-  private def instanceUpBeforeMeExist():Boolean =  {
+  private def instanceUpBeforeMeExist(): Boolean = {
     !all_instances
       .filter(_.getState() == "UP")
       .filter(_.getDeployNumber() < instance_nb.toInt)

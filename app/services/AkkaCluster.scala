@@ -1,9 +1,10 @@
 package services
 
-import actor.BroadcastActor
+import actor.{CounterSharding, Counter, BroadcastActor}
 import actor.BroadcastActor.Message
 import akka.actor.{ActorRef, Address, Props, ActorSystem}
 import akka.cluster.Cluster
+import akka.cluster.sharding.{ClusterShardingSettings, ClusterSharding}
 import com.typesafe.config.{ConfigValueFactory, ConfigFactory}
 import play.api.Logger
 import play.api.inject.ApplicationLifecycle
@@ -23,7 +24,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
   Logger.info(s"[AkkaCluster] starting")
   println(s">>> [AkkaCluster] starting")
-  init()
+
+  val system_cc: ActorSystem = init()
 
   def init() = {
     val is_seed = clevercloudApi.isSeedNode()
@@ -36,22 +38,27 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     }
   }
 
-  def init_from_config() = {
+  def init_from_config(): ActorSystem = {
 
-    val system: ActorSystem = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
 
-    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    val broadcaster = system_cc.actorOf(Props[BroadcastActor], name = "broadcast")
     dispatch_msg(broadcaster)
+    CounterSharding.launch_sharding(system_cc)
+
+    system_cc
   }
 
-  def init_dyn() = {
-    val system: ActorSystem = create_system()
+  def init_dyn(): ActorSystem = {
+    val system_cc: ActorSystem = create_system()
 
-    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    val broadcaster = system_cc.actorOf(Props[BroadcastActor], name = "broadcast")
     //Logger.info(s"[AkkaCluster] join cluster")
     //join_cluster(system, is_seed)
+
+    system_cc
   }
 
   private def create_system(): ActorSystem = {
@@ -86,9 +93,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(NetworkUtils.getIp()))
     //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(cluster_port))
 
-    val system = ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load().getConfig("akka-cc"))
-
-    system
+    ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load().getConfig("akka-cc"))
   }
 
   private def join_cluster(system: ActorSystem, is_seed: Boolean) = {
