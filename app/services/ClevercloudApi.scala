@@ -70,7 +70,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
     val from_config = configuration.getBoolean("application.cluster.is.seed").getOrElse(false)
 
     val from_cc = all_instances
-      .filter(_.getState == "UP")
+      .filter(app => starting_status.contains(app.getState()))
       .sortBy(_.getDeployNumber)
       .headOption
       .map(_.getId == instance_id)
@@ -87,5 +87,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .isEmpty
   }
 
-  private def status = List("BOOTING", "STARTING", "DEPLOYING", "READY", "UP", "STOPPING", "DELETED", "GHOST")
+  private def starting_status = List("BOOTING", "STARTING", "DEPLOYING", "READY", "UP")
+  private def stoping_status = List("STOPPING", "DELETED", "GHOST")
+  private def status = starting_status ++ stoping_status
 }
