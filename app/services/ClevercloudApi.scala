@@ -2,7 +2,7 @@ package services
 
 import com.google.inject.{Inject, Singleton}
 import io.swagger.client.model.AppInstance
-import play.api.Play
+import play.api.{Logger, Play, Configuration}
 import play.api.Play.current
 import utils.NetworkUtils
 
@@ -10,8 +10,6 @@ import io.swagger.client._
 import io.swagger.client.api.DefaultApi
 
 import scala.collection.JavaConverters._
-
-import play.api.Configuration
 
 @Singleton
 class ClevercloudApi @Inject() (configuration: Configuration) {
@@ -78,6 +76,16 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .map(_.getId == instance_id)
       .getOrElse(from_property)
 
+    Logger.warn(s"is seed : $from_property - $from_config - $from_cc")
     from_property || from_config || from_cc
   }
+
+  private def instanceUpBeforeMeExist():Boolean =  {
+    !all_instances
+      .filter(_.getState() == "UP")
+      .filter(_.getDeployNumber() < instance_nb.toInt)
+      .isEmpty
+  }
+
+  private def status = List("BOOTING", "STARTING", "DEPLOYING", "READY", "UP", "STOPPING", "DELETED", "GHOST")
 }

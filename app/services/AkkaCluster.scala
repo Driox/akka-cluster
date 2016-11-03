@@ -23,7 +23,36 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
   Logger.info(s"[AkkaCluster] starting")
   println(s">>> [AkkaCluster] starting")
-  init_from_config()
+  init()
+
+  def init() = {
+    val is_seed = clevercloudApi.isSeedNode()
+    Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
+
+    if (is_seed) {
+      init_from_config()
+    } else {
+      init_dyn()
+    }
+  }
+
+  def init_from_config() = {
+
+    val system: ActorSystem = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+
+    //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
+
+    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    dispatch_msg(broadcaster)
+  }
+
+  def init_dyn() = {
+    val system: ActorSystem = create_system()
+
+    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    //Logger.info(s"[AkkaCluster] join cluster")
+    //join_cluster(system, is_seed)
+  }
 
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
@@ -36,10 +65,20 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
     val overrideConfig =
       ConfigFactory.empty()
-        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-        .withValue("akka.remote.log-remote-lifecycle-events", ConfigValueFactory.fromAnyRef("off"))
         .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
         .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+
+    //      ConfigFactory.empty()
+    //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
+    //        .withValue("akka.remote.log-remote-lifecycle-events", ConfigValueFactory.fromAnyRef("off"))
+    //        .withValue("akka.cluster.metrics.enabled", ConfigValueFactory.fromAnyRef("off"))
+    //        .withValue("akka.extensions", ConfigValueFactory.fromAnyRef("akka.cluster.metrics.ClusterMetricsExtension"))
+    //
+    //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+    //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+    //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef("127.0.0.1"))
+    //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef("2551"))
+
     //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
 
     //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("test-cluster.particeep.com"))
@@ -47,7 +86,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(NetworkUtils.getIp()))
     //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(cluster_port))
 
-    val system = ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load())
+    val system = ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load().getConfig("akka-cc"))
 
     system
   }
@@ -66,33 +105,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     }
   }
 
-  def init_from_config() = {
-
-    val system: ActorSystem = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
-
-    //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
-
-    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
-    dispatch_msg(broadcaster)
-  }
-
-  def init() = {
-    val is_seed = clevercloudApi.isSeedNode()
-    Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
-    val system: ActorSystem = create_system()
-
-    Logger.info(s"[AkkaCluster] join cluster")
-    join_cluster(system, is_seed)
-
-    Logger.info(s"[AkkaCluster] add brodcaster actor")
-    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
-
-    if (is_seed) {
-      dispatch_msg(broadcaster)
-    }
-  }
-
-  def dispatch_msg(broadcaster: ActorRef) = {
+  private def dispatch_msg(broadcaster: ActorRef) = {
     Logger.info(s"[AkkaCluster] start scheduler")
     implicit val executor = system.dispatcher
     system.scheduler.schedule(0 seconds, 5 seconds) {
