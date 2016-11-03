@@ -28,10 +28,16 @@ class BroadcastActor extends Actor with ActorLogging {
       Logger.warn(s"Message from [${sender().path.toString}] : [$message]")
     case Message(content) =>
       members foreach (pathOf(_) ! content)
-    case MemberUp(member) =>
+    case MemberUp(member) => {
+      log.info("Member is Up: {}", member.address)
       members += member
-    case MemberRemoved(member, previousStatus) =>
+    }
+    case UnreachableMember(member) =>
+      log.info("Member detected as unreachable: {}", member)
+    case MemberRemoved(member, previousStatus) => {
+      log.info("Member is Removed: {} after {}", member.address, previousStatus)
       members.find(_.address == member.address) foreach (members -= _)
+    }
     case _: MemberEvent =>
     // ignore other events about members
   }

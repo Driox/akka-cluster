@@ -2,7 +2,7 @@ package services
 
 import actor.BroadcastActor
 import actor.BroadcastActor.Message
-import akka.actor.{Address, Props, ActorSystem}
+import akka.actor.{ActorRef, Address, Props, ActorSystem}
 import akka.cluster.Cluster
 import com.typesafe.config.{ConfigValueFactory, ConfigFactory}
 import play.api.Logger
@@ -19,11 +19,11 @@ import play.api.{Configuration, Environment}
 import collection.JavaConverters._
 
 @Singleton
-class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration) {
+class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration, system: ActorSystem) {
 
   Logger.info(s"[AkkaCluster] starting")
   println(s">>> [AkkaCluster] starting")
-  init()
+  init_from_config()
 
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
@@ -52,7 +52,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     system
   }
 
-  private def join_cluster(system: ActorSystem, is_seed:Boolean) = {
+  private def join_cluster(system: ActorSystem, is_seed: Boolean) = {
     val cluster = Cluster(system)
     if (is_seed) {
       val ip = clevercloudApi.getCurrentInstanceIp()
@@ -64,6 +64,16 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
         cluster.join(Address("akka.tcp", system.name, ip._1, ip._2))
       }
     }
+  }
+
+  def init_from_config() = {
+
+    val system: ActorSystem = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+
+    //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
+
+    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    dispatch_msg(broadcaster)
   }
 
   def init() = {
@@ -78,15 +88,19 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
 
     if (is_seed) {
-      Logger.info(s"[AkkaCluster] start scheduler")
-      implicit val executor = system.dispatcher
-      system.scheduler.schedule(0 seconds, 5 seconds) {
-        val words = Random.shuffle(
-          List("peter", "piper", "picked", "a", "peck", "of", "pickled", "pepper")
-        )
-        Logger.warn(s"[AkkaCluster] start dispatch word : $words")
-        broadcaster ! Message(words mkString " ")
-      }
+      dispatch_msg(broadcaster)
+    }
+  }
+
+  def dispatch_msg(broadcaster: ActorRef) = {
+    Logger.info(s"[AkkaCluster] start scheduler")
+    implicit val executor = system.dispatcher
+    system.scheduler.schedule(0 seconds, 5 seconds) {
+      val words = Random.shuffle(
+        List("peter", "piper", "picked", "a", "peck", "of", "pickled", "pepper")
+      )
+      Logger.warn(s"[AkkaCluster] start dispatch word : $words")
+      broadcaster ! Message(words mkString " ")
     }
   }
 }

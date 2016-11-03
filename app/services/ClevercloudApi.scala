@@ -59,6 +59,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
       .map(i => (i.getIp, i.getAppPort.intValue()))
 
     //List(("192.168.1.16", 2552), ("192.168.1.16", 2551))
+    //List(("127.0.0.1", 2552), ("127.0.0.1", 2551))
   }
 
   def getOtherInstanceIp(): List[(String, Int)] = {

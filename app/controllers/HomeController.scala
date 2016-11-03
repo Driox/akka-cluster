@@ -24,8 +24,8 @@ class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: C
 
   def ping = Action {
     println(s"ping done")
-        val akka = new AkkaCluster(clevercloudApi, configuration)
-        akka.init()
+    //    val akka = new AkkaCluster(clevercloudApi, configuration)
+    //    akka.init()
     Ok(s"OK")
   }
 
