@@ -5,7 +5,10 @@ This file will be packaged with your application when using `activator dist`.
 
 There are several demonstration files available in this template.
 
+git remote add clever-node git+ssh://git@push-par-clevercloud-customers.services.clever-cloud.com/app_44aedea4-c332-4c15-af16-e03a7f47438d.git
+
 git push clever master
+git push clever-node develop:master
 
 Controllers
 ===========
