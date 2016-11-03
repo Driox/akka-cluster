@@ -70,7 +70,7 @@ object CounterSharding {
     case msg @ Get(id)               => (id.toString, msg)
   }
 
-  val numberOfShards = 1
+  val numberOfShards = 2
 
   val extractShardId: ShardRegion.ExtractShardId = {
     case EntityEnvelope(id, _) => (id % numberOfShards).toString
