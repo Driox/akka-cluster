@@ -6,7 +6,7 @@ import akka.actor.{ActorRef, Address, Props, ActorSystem}
 import akka.cluster.Cluster
 import akka.cluster.sharding.{ClusterShardingSettings, ClusterSharding}
 import com.typesafe.config.{ConfigValueFactory, ConfigFactory}
-import play.api.Logger
+import play.api.{Play, Logger, Configuration, Environment}
 import play.api.inject.ApplicationLifecycle
 import utils.NetworkUtils
 
@@ -14,8 +14,6 @@ import scala.util.Random
 import scala.concurrent.duration._
 import com.google.inject.{Inject, Singleton, AbstractModule}
 import com.google.inject.name.Names
-
-import play.api.{Configuration, Environment}
 
 import collection.JavaConverters._
 
@@ -58,6 +56,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     //Logger.info(s"[AkkaCluster] join cluster")
     //join_cluster(system, is_seed)
 
+    CounterSharding.launch_sharding(system_cc)
+
     system_cc
   }
 
@@ -70,11 +70,27 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
     Logger.info(s"[AkkaCluster] currentIp = $currentIp")
 
-    val overrideConfig =
+    val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
+
+    val overrideConfig = if (is_local) {
       ConfigFactory.empty()
+        // *************************
+        // test config
+        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("ioi.local.particeep.com"))
+        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+        //.withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
+        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
+
+    } else {
+
+      ConfigFactory.empty()
+        // *************************
+        // prod config
         .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
         .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
 
+    }
     //      ConfigFactory.empty()
     //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
     //        .withValue("akka.remote.log-remote-lifecycle-events", ConfigValueFactory.fromAnyRef("off"))

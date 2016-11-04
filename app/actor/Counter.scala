@@ -3,6 +3,7 @@ package actor
 import akka.actor._
 import akka.cluster.sharding.{ClusterShardingSettings, ClusterSharding, ShardRegion}
 import akka.persistence.PersistentActor
+import play.api.Logger
 
 import scala.concurrent.duration._
 
@@ -41,8 +42,8 @@ class Counter extends PersistentActor with ActorLogging {
       persist(CounterChanged(-1))(updateState)
     }
     case Get(x) => {
-      log.warning(s"GET $x")
-      sender() ! count
+      log.warning(s"GET $x - with count = $count")
+      //sender() ! count
     }
     case ReceiveTimeout => {
       log.warning("ReceiveTimeout")
@@ -79,11 +80,14 @@ object CounterSharding {
 
   def test(system: ActorSystem) = {
     val counterRegion: ActorRef = ClusterSharding(system).shardRegion("Counter")
+    Logger.info(s"send on region 1")
     counterRegion ! Get(123)
-    //expectMsg(0)
-
     counterRegion ! EntityEnvelope(123, Increment)
     counterRegion ! Get(123)
-    //expectMsg(1)
+
+    Logger.info(s"send on region 2")
+    counterRegion ! Get(124)
+    counterRegion ! EntityEnvelope(124, Increment)
+    counterRegion ! Get(124)
   }
 }
