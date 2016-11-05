@@ -10,6 +10,9 @@ git remote add clever-node git+ssh://git@push-par-clevercloud-customers.services
 git push clever master
 git push clever-node develop:master
 
+git push clever -f feature/cluster-1:master
+git push clever-node -f feature/cluster-1:master
+
 Controllers
 ===========
 
