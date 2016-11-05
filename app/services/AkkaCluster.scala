@@ -68,19 +68,18 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     //val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
     val currentIp = clevercloudApi.getCurrentInstanceIp()
 
-    Logger.info(s"[AkkaCluster] currentIp = $currentIp")
-
     val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
+    Logger.info(s"[AkkaCluster] currentIp = $currentIp - is local $is_local")
 
     val overrideConfig = if (is_local) {
       ConfigFactory.empty()
-        // *************************
-        // test config
-        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("ioi.local.particeep.com"))
-        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-        //.withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
-        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
+      // *************************
+      // test config
+      //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("aac280b2.ngrok.io"))
+      //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+      //        //.withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+      //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
+      //        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
 
     } else {
 
