@@ -50,7 +50,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   def init_dyn(): ActorSystem = {
-    val system_cc: ActorSystem = create_system()
+    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     val broadcaster = system_cc.actorOf(Props[BroadcastActor], name = "broadcast")
     //Logger.info(s"[AkkaCluster] join cluster")
