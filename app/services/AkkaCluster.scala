@@ -66,7 +66,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       val ip = clevercloudApi.getCurrentInstanceIp()
       List(s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
     } else {
-      loadSeedNodes()
+      loadSeedNodesWithDelay()
     }
   }
 
