@@ -61,17 +61,26 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     system_cc
   }
 
-  private def loadSeedNodes(nb_of_try:Int = 0):List[String] = {
-   val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
-    if(nb_of_try > 60){
+  private def loadSeedNodes(): List[String] = {
+    if (clevercloudApi.isSeedNode()) {
+      val ip = clevercloudApi.getCurrentInstanceIp()
+      List(s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    } else {
+      loadSeedNodes()
+    }
+  }
+
+  private def loadSeedNodesWithDelay(nb_of_try: Int = 0): List[String] = {
+    val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    if (nb_of_try > 60) {
       Logger.info(s"[AkkaCluster] too long to load seed node, we abord")
       List()
-    } else if(seeds.isEmpty){
+    } else if (seeds.isEmpty) {
       Logger.info(s"[AkkaCluster] no seed node detected. Entering sleep for 10s ...")
       Thread.sleep(10000) // 2s
 
-      loadSeedNodes(nb_of_try + 1 )
-    }else{
+      loadSeedNodesWithDelay(nb_of_try + 1)
+    } else {
       Logger.info(s"[AkkaCluster] seed nodes loaded : \n${seeds.mkString("\n")}")
       seeds
     }

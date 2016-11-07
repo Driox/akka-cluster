@@ -71,7 +71,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
 
   def allSeedInstanceIp(): List[(String, Int)] = {
     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
-    .filter(_.getState == "UP")
+      .filter(_.getState == "UP")
       .map(i => (i.getIp, i.getAppPort.intValue()))
   }
 
