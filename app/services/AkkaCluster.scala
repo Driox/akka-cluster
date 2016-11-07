@@ -83,6 +83,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
     } else {
 
+      Logger.info(s"[AkkaCluster] seed nodes : /n${seeds.mkString("\n")}")
+
       ConfigFactory.empty()
         // *************************
         // prod config
