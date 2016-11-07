@@ -61,10 +61,28 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     system_cc
   }
 
+  private def loadSeedNodes(nb_of_try:Int = 0):List[String] = {
+   val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    if(nb_of_try > 60){
+      Logger.info(s"[AkkaCluster] too long to load seed node, we abord")
+      List()
+    } else if(seeds.isEmpty){
+      Logger.info(s"[AkkaCluster] no seed node detected. Entering sleep for 10s ...")
+      Thread.sleep(10000) // 2s
+
+      loadSeedNodes(nb_of_try + 1 )
+    }else{
+      Logger.info(s"[AkkaCluster] seed nodes loaded : \n${seeds.mkString("\n")}")
+      seeds
+    }
+  }
+
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
 
-    val seeds = clevercloudApi.getSeedRunningInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    val seeds = loadSeedNodes()
+    Logger.info(s"[AkkaCluster] seed nodes : \n${seeds.mkString("\n")}")
+
     val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
     val currentIp = clevercloudApi.getCurrentInstanceIp()
 
@@ -82,8 +100,6 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       //        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
 
     } else {
-
-      Logger.info(s"[AkkaCluster] seed nodes : /n${seeds.mkString("\n")}")
 
       ConfigFactory.empty()
         // *************************
