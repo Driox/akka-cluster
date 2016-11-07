@@ -38,7 +38,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
   def init_from_config(): ActorSystem = {
 
-    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
 
@@ -50,7 +50,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   def init_dyn(): ActorSystem = {
-    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     val broadcaster = system_cc.actorOf(Props[BroadcastActor], name = "broadcast")
     //Logger.info(s"[AkkaCluster] join cluster")
@@ -86,8 +86,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       ConfigFactory.empty()
         // *************************
         // prod config
-        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
 
     }
     //      ConfigFactory.empty()
