@@ -18,6 +18,7 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
   private val instance_id = configuration.getString("clevercloud.instance.id").getOrElse("not_set")
 
   private val app_test_cluster = configuration.getString("clevercloud.app_id.test_cluster").getOrElse("not_set")
+  private val app_test_cluster_node = configuration.getString("clevercloud.app_id.test_cluster_node").getOrElse("not_set")
   private val particeep = configuration.getString("clevercloud.org_id.particeep").getOrElse("not_set")
 
   private val base_url = configuration.getString("clevercloud.api.base_url").getOrElse("https://api.clever-cloud.com/v2/")
@@ -44,9 +45,13 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
   }
 
   def getCurrentInstanceIp(): (String, Int) = {
-    all_instances
-      .filter(_.getId == instance_id)
-      .map(i => (i.getIp, i.getAppPort.intValue()))
+    //    all_instances
+    //      .filter(_.getId == instance_id)
+    //      .map(i => (i.getIp, i.getAppPort.intValue()))
+    //      .headOption
+    //      .getOrElse((NetworkUtils.getIp(), NetworkUtils.getPort()))
+
+    (getSeedRunningInstanceIp ++ getNodeRunningInstanceIp)
       .headOption
       .getOrElse((NetworkUtils.getIp(), NetworkUtils.getPort()))
   }
@@ -62,6 +67,18 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
 
   def getOtherInstanceIp(): List[(String, Int)] = {
     getRunningInstanceIp().filter(_ != getCurrentInstanceIp())
+  }
+
+  def getSeedRunningInstanceIp(): List[(String, Int)] = {
+    api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
+      .filter(_.getId == instance_id)
+      .map(i => (i.getIp, i.getAppPort.intValue()))
+  }
+
+  def getNodeRunningInstanceIp(): List[(String, Int)] = {
+    api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster_node).asScala.toList
+      .filter(_.getId == instance_id)
+      .map(i => (i.getIp, i.getAppPort.intValue()))
   }
 
   def isSeedNode(): Boolean = {

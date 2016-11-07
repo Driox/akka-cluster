@@ -64,8 +64,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
 
-    //val seeds = clevercloudApi.getOtherInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
-    //val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
+    val seeds = clevercloudApi.getSeedRunningInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
     val currentIp = clevercloudApi.getCurrentInstanceIp()
 
     val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
@@ -86,9 +86,9 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       ConfigFactory.empty()
         // *************************
         // prod config
-        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-        //.withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
-
+        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+        .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
     }
     //      ConfigFactory.empty()
     //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
