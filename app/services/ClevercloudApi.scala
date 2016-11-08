@@ -51,7 +51,10 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
     //      .headOption
     //      .getOrElse((NetworkUtils.getIp(), NetworkUtils.getPort()))
 
-    (getSeedRunningInstanceIp ++ getNodeRunningInstanceIp)
+    (api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
+      ++ api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster_node).asScala.toList)
+      .filter(_.getId == instance_id)
+      .map(i => (i.getIp, i.getAppPort.intValue()))
       .headOption
       .getOrElse((NetworkUtils.getIp(), NetworkUtils.getPort()))
   }
@@ -77,13 +80,11 @@ class ClevercloudApi @Inject() (configuration: Configuration) {
 
   def getSeedRunningInstanceIp(): List[(String, Int)] = {
     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster).asScala.toList
-      .filter(_.getId == instance_id)
       .map(i => (i.getIp, i.getAppPort.intValue()))
   }
 
   def getNodeRunningInstanceIp(): List[(String, Int)] = {
     api.getOrganisationsIdApplicationsAppIdInstances(particeep, app_test_cluster_node).asScala.toList
-      .filter(_.getId == instance_id)
       .map(i => (i.getIp, i.getAppPort.intValue()))
   }
 

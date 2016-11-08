@@ -25,6 +25,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   println(s">>> [AkkaCluster] starting")
 
   val system_cc: Option[ActorSystem] = init()
+  val cluster_port = configuration.getInt("application.cluster.port").getOrElse(2551)
 
   def init() = {
     try {
@@ -43,7 +44,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
   def init_from_config(): ActorSystem = {
 
-    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
 
@@ -55,7 +56,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   def init_dyn(): ActorSystem = {
-    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     //    val cluster = Cluster(system_cc)
     //    cluster.joinSeedNodes(List(Address("akka.tcp", "akka-cc", "test-cluster.particeep.com", 80)))
@@ -72,10 +73,10 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   private def create_system(): ActorSystem = {
     Logger.info(s"[AkkaCluster] creating system")
 
-    //val seeds = loadSeedNodes()
-    //Logger.info(s"[AkkaCluster] seed nodes : \n${seeds.mkString("\n")}")
+    val seeds = loadSeedNodes()
+    Logger.info(s"[AkkaCluster] seed nodes : \n${seeds.mkString("\n")}")
 
-    //val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
+    val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
     val currentIp = clevercloudApi.getCurrentInstanceIp()
 
     val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
@@ -97,8 +98,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
         // *************************
         // prod config
         .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-      //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
+        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(cluster_port))
+        .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
     }
     //      ConfigFactory.empty()
     //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
@@ -122,16 +123,21 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   private def loadSeedNodes(): List[String] = {
-    if (clevercloudApi.isSeedNode()) {
-      val ip = clevercloudApi.getCurrentInstanceIp()
-      List(s"akka.tcp://akka-cc@${ip._1}:2551")
-    } else {
-      loadSeedNodesWithDelay()
+    val rez = for {
+      seed_ip <- clevercloudApi.getSeedRunningInstanceIp().headOption
+      node_ip <- clevercloudApi.getNodeRunningInstanceIp().headOption
+    } yield {
+      List(
+        s"akka.tcp://akka-cc@${seed_ip._1}:$cluster_port",
+        s"akka.tcp://akka-cc@${node_ip._1}:$cluster_port"
+      )
     }
+
+    rez.getOrElse(List())
   }
 
   private def loadSeedNodesWithDelay(nb_of_try: Int = 0): List[String] = {
-    val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:2551")
+    val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:$cluster_port")
     if (nb_of_try > 60) {
       Logger.info(s"[AkkaCluster] too long to load seed node, we abord")
       List()
