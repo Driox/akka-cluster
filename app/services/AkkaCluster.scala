@@ -38,7 +38,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
 
   def init_from_config(): ActorSystem = {
 
-    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
 
     //val master:ActorRef = system.actorFor("akka://master@your-master-host-name:your-master-port/user/master")
 
@@ -59,6 +59,58 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
     CounterSharding.launch_sharding(system_cc)
 
     system_cc
+  }
+
+  private def create_system(): ActorSystem = {
+    Logger.info(s"[AkkaCluster] creating system")
+
+    //val seeds = loadSeedNodes()
+    //Logger.info(s"[AkkaCluster] seed nodes : \n${seeds.mkString("\n")}")
+
+    //val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
+    val currentIp = clevercloudApi.getCurrentInstanceIp()
+
+    val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
+    Logger.info(s"[AkkaCluster] currentIp = $currentIp - is local $is_local")
+
+    val overrideConfig = if (is_local) {
+      ConfigFactory.empty()
+      // *************************
+      // test config
+      //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("aac280b2.ngrok.io"))
+      //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+      //        //.withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+      //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
+      //        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
+
+    } else {
+
+      ConfigFactory.empty()
+        // *************************
+        // prod config
+        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+        //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
+    }
+    //      ConfigFactory.empty()
+    //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
+    //        .withValue("akka.remote.log-remote-lifecycle-events", ConfigValueFactory.fromAnyRef("off"))
+    //        .withValue("akka.cluster.metrics.enabled", ConfigValueFactory.fromAnyRef("off"))
+    //        .withValue("akka.extensions", ConfigValueFactory.fromAnyRef("akka.cluster.metrics.ClusterMetricsExtension"))
+    //
+    //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
+    //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
+    //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef("127.0.0.1"))
+    //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef("2551"))
+
+    //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
+
+    //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("test-cluster.particeep.com"))
+    //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(80))
+    //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(NetworkUtils.getIp()))
+    //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(cluster_port))
+
+    ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load().getConfig("akka-cc"))
   }
 
   private def loadSeedNodes(): List[String] = {
@@ -84,58 +136,6 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       Logger.info(s"[AkkaCluster] seed nodes loaded : \n${seeds.mkString("\n")}")
       seeds
     }
-  }
-
-  private def create_system(): ActorSystem = {
-    Logger.info(s"[AkkaCluster] creating system")
-
-    val seeds = loadSeedNodes()
-    Logger.info(s"[AkkaCluster] seed nodes : \n${seeds.mkString("\n")}")
-
-    val seeds_config: java.lang.Iterable[String] = seeds.toIterable.asJava
-    val currentIp = clevercloudApi.getCurrentInstanceIp()
-
-    val is_local = configuration.getBoolean("is_local_mode").getOrElse(true)
-    Logger.info(s"[AkkaCluster] currentIp = $currentIp - is local $is_local")
-
-    val overrideConfig = if (is_local) {
-      ConfigFactory.empty()
-      // *************************
-      // test config
-      //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("aac280b2.ngrok.io"))
-      //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-      //        //.withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-      //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(currentIp._2))
-      //        .withValue("akka.persistence.journal.leveldb.dir", ConfigValueFactory.fromAnyRef("target/journal2"))
-
-    } else {
-
-      ConfigFactory.empty()
-        // *************************
-        // prod config
-        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-        .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
-    }
-    //      ConfigFactory.empty()
-    //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-    //        .withValue("akka.remote.log-remote-lifecycle-events", ConfigValueFactory.fromAnyRef("off"))
-    //        .withValue("akka.cluster.metrics.enabled", ConfigValueFactory.fromAnyRef("off"))
-    //        .withValue("akka.extensions", ConfigValueFactory.fromAnyRef("akka.cluster.metrics.ClusterMetricsExtension"))
-    //
-    //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-    //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-    //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef("127.0.0.1"))
-    //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef("2551"))
-
-    //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
-
-    //        .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef("test-cluster.particeep.com"))
-    //        .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(80))
-    //        .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(NetworkUtils.getIp()))
-    //        .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(cluster_port))
-
-    ActorSystem("akka-cc", overrideConfig withFallback ConfigFactory.load().getConfig("akka-cc"))
   }
 
   private def join_cluster(system: ActorSystem, is_seed: Boolean) = {
