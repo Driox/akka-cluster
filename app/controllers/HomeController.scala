@@ -38,7 +38,7 @@ class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: C
     println(s"ping huge done")
     //val huge_list = List.fill(10000)(Random.nextString(20))
     //val json = Json.toJson(huge_list)
-
+  
     val init: String = """
            |==================
            |Cluster status
