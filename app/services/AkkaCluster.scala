@@ -25,12 +25,12 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   println(s">>> [AkkaCluster] starting")
 
   val system_cc: Option[ActorSystem] = init()
-  val cluster_port = configuration.getInt("application.cluster.port").getOrElse(2551)
 
   def init() = {
     try {
       val is_seed = clevercloudApi.isSeedNode()
-      Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
+
+      Logger.info(s"[AkkaCluster] init - is_seed : $is_seed - cluster port $cluster_port")
 
       if (is_seed) {
         Some(init_from_config())
@@ -41,6 +41,8 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
       case NonFatal(e) => Logger.error("Error on cluster startup", e); None
     }
   }
+
+  def cluster_port() = configuration.getInt("application.cluster.port").getOrElse(2551)
 
   def init_from_config(): ActorSystem = {
 
