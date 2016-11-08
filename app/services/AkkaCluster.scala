@@ -64,14 +64,14 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   private def loadSeedNodes(): List[String] = {
     if (clevercloudApi.isSeedNode()) {
       val ip = clevercloudApi.getCurrentInstanceIp()
-      List(s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+      List(s"akka.tcp://akka-cc@${ip._1}:2551")
     } else {
       loadSeedNodesWithDelay()
     }
   }
 
   private def loadSeedNodesWithDelay(nb_of_try: Int = 0): List[String] = {
-    val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:${ip._2}")
+    val seeds = clevercloudApi.allSeedInstanceIp() map (ip => s"akka.tcp://akka-cc@${ip._1}:2551")
     if (nb_of_try > 60) {
       Logger.info(s"[AkkaCluster] too long to load seed node, we abord")
       List()
