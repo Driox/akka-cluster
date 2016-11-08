@@ -16,6 +16,7 @@ import com.google.inject.{Inject, Singleton, AbstractModule}
 import com.google.inject.name.Names
 
 import collection.JavaConverters._
+import scala.util.control.NonFatal
 
 @Singleton
 class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration, system: ActorSystem) {
@@ -23,16 +24,20 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   Logger.info(s"[AkkaCluster] starting")
   println(s">>> [AkkaCluster] starting")
 
-  val system_cc: ActorSystem = init()
+  val system_cc: Option[ActorSystem] = init()
 
   def init() = {
-    val is_seed = clevercloudApi.isSeedNode()
-    Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
+    try {
+      val is_seed = clevercloudApi.isSeedNode()
+      Logger.info(s"[AkkaCluster] init - is_seed : $is_seed")
 
-    if (is_seed) {
-      init_from_config()
-    } else {
-      init_dyn()
+      if (is_seed) {
+        Some(init_from_config())
+      } else {
+        Some(init_dyn())
+      }
+    } catch {
+      case NonFatal(e) => Logger.error("Error on cluster startup", e); None
     }
   }
 
@@ -50,7 +55,10 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   }
 
   def init_dyn(): ActorSystem = {
-    val system_cc = create_system() // ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+    val system_cc = ActorSystem.create("akka-cc", ConfigFactory.load().getConfig("akka-cc"))
+
+    val cluster = Cluster(system_cc)
+    cluster.joinSeedNodes(List(Address("akka.tcp", "akka-cc", "test-cluster.particeep.com", 80)))
 
     val broadcaster = system_cc.actorOf(Props[BroadcastActor], name = "broadcast")
     //Logger.info(s"[AkkaCluster] join cluster")
@@ -90,7 +98,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
         // prod config
         .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
         .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
-        //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
+      //.withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
     }
     //      ConfigFactory.empty()
     //        .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))

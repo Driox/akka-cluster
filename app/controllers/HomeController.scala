@@ -3,6 +3,7 @@ package controllers
 import java.net.InetAddress
 import javax.inject._
 import actor.CounterSharding
+import akka.cluster.Cluster
 import play.api.Play.current
 import play.api._
 import play.api.libs.json.Json
@@ -28,16 +29,36 @@ class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: C
     //    val akka = new AkkaCluster(clevercloudApi, configuration)
     //    akka.init()
 
-    CounterSharding.test(cluster.system_cc)
+    cluster.system_cc.map(CounterSharding.test(_))
 
     Ok(s"OK")
   }
 
   def ping_huge() = Action {
     println(s"ping huge done")
-    val huge_list = List.fill(10000)(Random.nextString(20))
-    val json = Json.toJson(huge_list)
-    Ok(json)
+    //val huge_list = List.fill(10000)(Random.nextString(20))
+    //val json = Json.toJson(huge_list)
+
+    val init: String = """
+           |==================
+           |Cluster status
+           |==================
+        """.stripMargin
+
+    val cluster_status = cluster.system_cc.map { cc =>
+      println(s"try to log cluster state : $cc")
+
+      val cc_cluster = Cluster(cc)
+      val status = cc_cluster.state.members
+      status.foldLeft("")((s, m) =>
+        s + s"""
+           |cluster member : $m
+           |  - adr    : ${m.address}
+           |  - status : ${m.status}
+         """.stripMargin)
+    }.getOrElse("no cluster started")
+
+    Ok(init + cluster_status)
   }
 
   /**
