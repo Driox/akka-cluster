@@ -11,12 +11,16 @@ import collection.JavaConverters._
 
 class CustomApplicationLoader extends GuiceApplicationLoader {
 
+  val system_name = "application"
+
   override protected def builder(context: Context): GuiceApplicationBuilder = {
     Logger.info("[CustomApplicationLoader] start builder")
     val builder = initialBuilder.in(context.environment).overrides(overrides(context): _*)
 
-    val prodConf = loadCustomConfig(context.initialConfiguration)
-    builder.loadConfig(prodConf ++ context.initialConfiguration)
+    //    val prodConf = loadCustomConfig(context.initialConfiguration)
+    //    builder.loadConfig(prodConf ++ context.initialConfiguration)
+
+    builder.loadConfig(context.initialConfiguration)
   }
 
   private def loadCustomConfig(init: Configuration): Configuration = {
@@ -54,8 +58,8 @@ class CustomApplicationLoader extends GuiceApplicationLoader {
       node_ip <- clevercloudApi.getNodeRunningInstanceIp().headOption
     } yield {
       List(
-        s"akka.tcp://akka-cc@${seed_ip._1}:${seed_ip._2}",
-        s"akka.tcp://akka-cc@${node_ip._1}:${node_ip._2}"
+        s"akka.tcp://$system_name@${seed_ip._1}:${seed_ip._2}",
+        s"akka.tcp://$system_name@${node_ip._1}:${node_ip._2}"
       )
     }
 
