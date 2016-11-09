@@ -40,7 +40,7 @@ class CustomApplicationLoader extends GuiceApplicationLoader {
 
     val overrideConfig = ConfigFactory.empty()
       .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(currentIp._1))
-      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(cluster_port))
+      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(currentIp._2))
       .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(seeds_config))
 
     Logger.info(s"[CustomApplicationLoader] new config $overrideConfig")
