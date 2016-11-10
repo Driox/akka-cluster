@@ -53,17 +53,18 @@ class CustomApplicationLoader extends GuiceApplicationLoader {
   }
 
   private def loadSeedNodes(init: Configuration, clevercloudApi: ClevercloudApi): List[String] = {
-    val rez = for {
-      seed_ip <- clevercloudApi.getSeedRunningInstanceIp().headOption
-      node_ip <- clevercloudApi.getNodeRunningInstanceIp().headOption
-    } yield {
-      List(
-        s"akka.tcp://$system_name@${seed_ip._1}:${seed_ip._2}",
-        s"akka.tcp://$system_name@${node_ip._1}:${node_ip._2}"
-      )
-    }
 
-    rez.getOrElse(List())
+    val seed_ip = clevercloudApi
+      .getSeedRunningInstanceIp()
+      .headOption
+      .map(ip => s"akka.tcp://$system_name@${ip._1}:${ip._2}")
+    val node_ip = clevercloudApi
+      .getNodeRunningInstanceIp()
+      .headOption
+      .map(ip => s"akka.tcp://$system_name@${ip._1}:${ip._2}")
+
+    val rez = List(seed_ip).flatten ++ List(node_ip).flatten
+    rez
   }
 
   private def load_cluster_port(configuration: Configuration) = configuration.getInt("application.cluster.port").getOrElse(2551)
