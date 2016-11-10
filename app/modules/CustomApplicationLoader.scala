@@ -17,10 +17,10 @@ class CustomApplicationLoader extends GuiceApplicationLoader {
     Logger.info("[CustomApplicationLoader] start builder")
     val builder = initialBuilder.in(context.environment).overrides(overrides(context): _*)
 
-    //    val prodConf = loadCustomConfig(context.initialConfiguration)
-    //    builder.loadConfig(prodConf ++ context.initialConfiguration)
+    val prodConf = loadCustomConfig(context.initialConfiguration)
+    builder.loadConfig(prodConf ++ context.initialConfiguration)
 
-    builder.loadConfig(context.initialConfiguration)
+    //builder.loadConfig(context.initialConfiguration)
   }
 
   private def loadCustomConfig(init: Configuration): Configuration = {
