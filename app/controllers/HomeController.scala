@@ -2,7 +2,9 @@ package controllers
 
 import java.net.InetAddress
 import javax.inject._
-import actor.CounterSharding
+import actor.BroadcastActor.Message
+import actor.{BroadcastActor, CounterSharding}
+import akka.actor.{Props, ActorSystem}
 import akka.cluster.Cluster
 import play.api.Play.current
 import play.api._
@@ -22,14 +24,21 @@ import scala.util.Random
  * application's home page.
  */
 @Singleton
-class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration, cluster: AkkaCluster) extends Controller {
+class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: Configuration, cluster: AkkaCluster, system: ActorSystem) extends Controller {
 
   def ping = Action {
     println(s"ping done")
     //    val akka = new AkkaCluster(clevercloudApi, configuration)
     //    akka.init()
 
-    cluster.system_cc.map(CounterSharding.test(_))
+    // cluster.system_cc.map(CounterSharding.test(_))
+
+    val broadcaster = system.actorOf(Props[BroadcastActor], name = "broadcast")
+    val words = Random.shuffle(
+      List("peter", "piper", "picked", "a", "peck", "of", "pickled", "pepper")
+    )
+    Logger.warn(s"[AkkaCluster] start dispatch word : $words")
+    broadcaster ! Message(words mkString " ")
 
     Ok(s"OK")
   }
@@ -45,20 +54,19 @@ class HomeController @Inject() (clevercloudApi: ClevercloudApi, configuration: C
            |==================
         """.stripMargin
 
-    val cluster_status = cluster.system_cc.map { cc =>
-      println(s"try to log cluster state : $cc")
+    val cluster_status = printClusterText(Cluster(system))
 
-      val cc_cluster = Cluster(cc)
-      val status = cc_cluster.state.members
-      status.foldLeft("")((s, m) =>
-        s + s"""
+    Ok(init + cluster_status)
+  }
+
+  private def printClusterText(cluster: Cluster): String = {
+    val status = cluster.state.members
+    status.foldLeft("")((s, m) =>
+      s + s"""
            |cluster member : $m
            |  - adr    : ${m.address}
            |  - status : ${m.status}
          """.stripMargin)
-    }.getOrElse("no cluster started")
-
-    Ok(init + cluster_status)
   }
 
   /**
