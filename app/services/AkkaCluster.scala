@@ -24,7 +24,7 @@ class AkkaCluster @Inject() (clevercloudApi: ClevercloudApi, configuration: Conf
   Logger.info(s"[AkkaCluster] starting")
   println(s">>> [AkkaCluster] starting")
 
-  val system_cc: Option[ActorSystem] = init()
+  //val system_cc: Option[ActorSystem] = init()
 
   def init() = {
     try {
